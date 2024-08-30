@@ -14,7 +14,7 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody2D rb; // Reference to the player's Rigidbody2D component
     private bool isGrounded = true; // Flag to check if the player is grounded
-    public float moveSpeed = 5f; // Speed at which the player moves
+    public float moveSpeed = 5f; // Speed of the player
 
     // Start is called before the first frame update
     void Start()
@@ -40,7 +40,6 @@ public class PlayerController : MonoBehaviour
         }
         transform.localScale = scale;
 
-        // Move the player
         if (speed != 0)
         {
             transform.Translate(Vector3.right * speed * moveSpeed * Time.deltaTime);
