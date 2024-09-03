@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
@@ -16,6 +15,10 @@ public class PlayerController : MonoBehaviour
     public float groundCheckRadius = 0.2f;
     public LayerMask groundLayer;
     public float moveSpeed = 5f;
+    public float fallDamageThreshold = -10f; // The speed at which fall damage starts
+    public int maxHealth = 100;
+    private int currentHealth;
+    private float lastFallSpeed;
 
     private Rigidbody2D rb;
     private bool isGrounded;
@@ -26,6 +29,7 @@ public class PlayerController : MonoBehaviour
         originalColliderSize = playerCollider.size;
         originalCollideroffset = playerCollider.offset;
         rb = GetComponent<Rigidbody2D>();
+        currentHealth = maxHealth;
     }
 
     void Update()
@@ -78,6 +82,12 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+
+        // Track the player's fall speed
+        if (!isGrounded && rb.velocity.y < 0)
+        {
+            lastFallSpeed = rb.velocity.y;
+        }
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -85,11 +95,51 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = true;
+
+            // Check for fall damage
+            if (lastFallSpeed <= fallDamageThreshold)
+            {
+                TakeDamage(Mathf.Abs((int)(lastFallSpeed * 10))); // Apply damage based on fall speed
+            }
         }
 
         if (collision.gameObject.CompareTag("Win"))
         {
-            SceneManager.LoadScene(SceneName);
+            Invoke("SceneChanger", 1.5f);
         }
+    }
+
+    private void TakeDamage(int damage)
+    {
+        currentHealth -= damage;
+        animator.SetTrigger("Hurt");
+
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        animator.SetBool("isDead", true);
+        StartCoroutine(ReloadSceneAfterDelay(2f)); // Adjust the delay time according to your animation length
+    }
+
+    private IEnumerator ReloadSceneAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        ReloadCurrentScene();
+    }
+
+    private void SceneChanger()
+    {
+        SceneManager.LoadScene(SceneName);
+    }
+
+    public void ReloadCurrentScene()
+    {
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        SceneManager.LoadScene(currentSceneName);
     }
 }
