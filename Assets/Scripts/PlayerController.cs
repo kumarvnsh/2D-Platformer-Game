@@ -1,13 +1,14 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
     public Animator animator;
     public BoxCollider2D playerCollider;
     private Vector2 originalColliderSize;
-    private Vector2 originalCollideroffset;
+    private Vector2 originalColliderOffset;
     public float crouchHeight = 0.5f;
     public float offset;
     public float jumpForce = 5f;
@@ -15,8 +16,8 @@ public class PlayerController : MonoBehaviour
     public float groundCheckRadius = 0.2f;
     public LayerMask groundLayer;
     public float moveSpeed = 5f;
-    public float fallDamageThreshold = -10f; // The speed at which fall damage starts
-    public int maxHealth = 100;
+    public float fallDamageThreshold = -10f;
+    public int maxHealth = 3; // Changed to 3 hearts
     private int currentHealth;
     private float lastFallSpeed;
 
@@ -24,12 +25,17 @@ public class PlayerController : MonoBehaviour
     private bool isGrounded;
     public string SceneName;
 
+    public Image[] hearts; // UI images representing hearts
+    public Sprite fullHeart; // Sprite for full heart
+    public Sprite emptyHeart; // Sprite for empty heart
+
     void Start()
     {
         originalColliderSize = playerCollider.size;
-        originalCollideroffset = playerCollider.offset;
+        originalColliderOffset = playerCollider.offset;
         rb = GetComponent<Rigidbody2D>();
         currentHealth = maxHealth;
+        UpdateHeartUI(); // Initialize heart UI
     }
 
     void Update()
@@ -56,19 +62,19 @@ public class PlayerController : MonoBehaviour
         {
             animator.SetBool("isCrouching", true);
             playerCollider.size = new Vector2(originalColliderSize.x, crouchHeight);
-            playerCollider.offset = new Vector2(originalCollideroffset.x, offset);
+            playerCollider.offset = new Vector2(originalColliderOffset.x, offset);
         }
         else
         {
             animator.SetBool("isCrouching", false);
             playerCollider.size = originalColliderSize;
-            playerCollider.offset = originalCollideroffset;
+            playerCollider.offset = originalColliderOffset;
         }
 
         if (isGrounded && Input.GetAxisRaw("Vertical") > 0)
         {
             animator.SetBool("Jump", true);
-            rb.velocity = new Vector2(rb.velocity.x, 0f); // Reset Y-velocity before jump
+            rb.velocity = new Vector2(rb.velocity.x, 0f);
             rb.AddForce(new Vector2(0f, jumpForce), ForceMode2D.Impulse);
             isGrounded = false;
         }
@@ -83,7 +89,6 @@ public class PlayerController : MonoBehaviour
     {
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
-        // Track the player's fall speed
         if (!isGrounded && rb.velocity.y < 0)
         {
             lastFallSpeed = rb.velocity.y;
@@ -96,10 +101,9 @@ public class PlayerController : MonoBehaviour
         {
             isGrounded = true;
 
-            // Check for fall damage
             if (lastFallSpeed <= fallDamageThreshold)
             {
-                TakeDamage(Mathf.Abs((int)(lastFallSpeed * 10))); // Apply damage based on fall speed
+                TakeDamage(1); // Fall damage makes the player lose 1 heart
             }
         }
 
@@ -109,15 +113,14 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.CompareTag("Enemy"))
         {
-            Die();
+            TakeDamage(1); // Lose 1 heart when hit by an enemy
         }
 
-        if(collision.gameObject.CompareTag("key"))
+        if (collision.gameObject.CompareTag("key"))
         {
             collision.gameObject.GetComponent<Animator>().SetTrigger("gain");
             StartCoroutine(KeyDelay(collision.gameObject));
@@ -134,6 +137,7 @@ public class PlayerController : MonoBehaviour
     {
         currentHealth -= damage;
         animator.SetTrigger("Hurt");
+        UpdateHeartUI();
 
         if (currentHealth <= 0)
         {
@@ -141,11 +145,28 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void UpdateHeartUI()
+    {
+        for (int i = 0; i < hearts.Length; i++)
+        {
+            if (i < currentHealth)
+            {
+                hearts[i].sprite = fullHeart;
+            }
+            else
+            {
+                hearts[i].sprite = emptyHeart;
+            }
+        }
+    }
+
     private void Die()
     {
         animator.SetBool("isDead", true);
-        StartCoroutine(ReloadSceneAfterDelay(2f)); // Adjust the delay time according to your animation length
+        StartCoroutine(ReloadSceneAfterDelay(2f));
     }
+
+   
 
     private IEnumerator ReloadSceneAfterDelay(float delay)
     {
