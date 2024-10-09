@@ -109,6 +109,27 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            Die();
+        }
+
+        if(collision.gameObject.CompareTag("key"))
+        {
+            collision.gameObject.GetComponent<Animator>().SetTrigger("gain");
+            StartCoroutine(KeyDelay(collision.gameObject));
+        }
+    }
+
+    private IEnumerator KeyDelay(GameObject gameObject)
+    {
+        yield return new WaitForSeconds(1.5f);
+        Destroy(gameObject);
+    }
+
     private void TakeDamage(int damage)
     {
         currentHealth -= damage;
