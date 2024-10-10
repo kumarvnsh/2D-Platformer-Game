@@ -29,10 +29,14 @@ public class PlayerController : MonoBehaviour
     public Sprite fullHeart; // Sprite for full heart
     public Sprite emptyHeart; // Sprite for empty heart
 
+    public GameObject GameOverPanel;
+    private Vector3 playerTransform;
+
     void Start()
     {
         originalColliderSize = playerCollider.size;
         originalColliderOffset = playerCollider.offset;
+        playerTransform = gameObject.transform.position;
         rb = GetComponent<Rigidbody2D>();
         currentHealth = maxHealth;
         UpdateHeartUI(); // Initialize heart UI
@@ -137,12 +141,21 @@ public class PlayerController : MonoBehaviour
     {
         currentHealth -= damage;
         animator.SetTrigger("Hurt");
+        StartCoroutine(ResetPosition());
         UpdateHeartUI();
 
         if (currentHealth <= 0)
         {
             Die();
         }
+    }
+
+    IEnumerator ResetPosition()
+    {
+        yield return new WaitForSeconds(0.6f);
+        gameObject.transform.position = playerTransform;
+        yield return new WaitForSeconds(0.4f);
+        animator.SetTrigger("reset");
     }
 
     private void UpdateHeartUI()
@@ -163,7 +176,21 @@ public class PlayerController : MonoBehaviour
     private void Die()
     {
         animator.SetBool("isDead", true);
-        StartCoroutine(ReloadSceneAfterDelay(2f));
+        GameOverPanel.SetActive(true);
+        StartCoroutine(ReloadSceneAfterDelay(1f));
+    }
+
+    public void RestartGame()
+    {
+        ReloadCurrentScene();
+        
+        Time.timeScale = 1;
+    }
+
+    public void QuitGame()
+    {
+        Application.Quit();
+        Time.timeScale = 1;
     }
 
    
@@ -171,7 +198,8 @@ public class PlayerController : MonoBehaviour
     private IEnumerator ReloadSceneAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
-        ReloadCurrentScene();
+        //ReloadCurrentScene();
+        Time.timeScale = 0;
     }
 
     private void SceneChanger()
