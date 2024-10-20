@@ -15,6 +15,12 @@ public class Lobby : MonoBehaviour
     public GameObject LevelSelector;
     public GameObject LobbyMenu;
 
+    public AudioSource AudioSource;
+    public AudioClip StartSound;
+    public AudioClip ExitSound;
+    public AudioClip LevelSound;
+    public AudioClip backSound;
+
     private void Start()
     {
         StartButton.onClick.AddListener(LevelSelect);
@@ -30,11 +36,13 @@ public class Lobby : MonoBehaviour
 
     public void QuitGame()
     {
+        AudioSource.PlayOneShot(ExitSound);
         Application.Quit();
     }
 
     public void LevelSelect()
     {
+        AudioSource.PlayOneShot(StartSound);
         LobbyMenu.SetActive(false);
         LevelSelector.SetActive(true);
         backButton.gameObject.SetActive(true);
@@ -44,16 +52,19 @@ public class Lobby : MonoBehaviour
 
     public void PlayLevel1()
     {
+        AudioSource.PlayOneShot(LevelSound);
         SceneManager.LoadScene("Level1");
     }
 
     public void PlayLevel2()
     {
+        AudioSource.PlayOneShot(LevelSound);
         SceneManager.LoadScene("Level2");
     }
 
     public void backSelect()
     {
+        AudioSource.PlayOneShot(backSound);
         LobbyMenu.SetActive(true);
         LevelSelector.SetActive(false);
         backButton.gameObject.SetActive(false);
